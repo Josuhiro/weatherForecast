@@ -11,7 +11,8 @@ def connect_to_db():
 def create_tables(con, cur):
     weather_table = """
     CREATE TABLE IF NOT EXISTS weather (
-        date VARCHAR(50) NOT NULL PRIMARY KEY,
+        id INT NOT NULL PRIMARY KEY,
+        date VARCHAR(50) NOT NULL,
         temperature INT NOT NULL,
         description VARCHAR(25) NOT NULL,
         feels_like INT NOT NULL,

@@ -17,8 +17,8 @@ def insert_current_weather():
         temp, feels_like, pressure, humidity = data['main']['temp'], data['main']['feels_like'], \
                                                data['main']['pressure'], data['main']['humidity']
         cur.execute(f"""REPLACE INTO weather(
-               date, temperature, description, feels_like, pressure, humidity)
-               VALUES ('{date}', {temp}, '{desc}', {feels_like}, {pressure}, {humidity})""")
+               id, date, temperature, description, feels_like, pressure, humidity)
+               VALUES (1, '{date}', {temp}, '{desc}', {feels_like}, {pressure}, {humidity})""")
         con.commit()
     else:
         print("Error, unable to connect to the API")
@@ -43,17 +43,14 @@ def insert_weather_forecast():
 
 
 def show_current_weather() -> None:
-    request = requests.get(LIVE_URL)
-    if request.status_code == 200:
-        data = request.json()
-        desc = data['weather'][0]['main'].lower()
-        temp, feels_like, pressure, humidity = data['main']['temp'], data['main']['feels_like'], \
-                                               data['main']['pressure'], data['main']['humidity']
-        print(
-            f'Current sky is {desc} temperature is {temp}, perceptible temperature is {feels_like} ,'
-            f' the pressure is {pressure} hPa, humidity is {humidity}%')
+    cur.execute("SELECT * FROM weather")
+    result = cur.fetchone()
+    if result == []:
+        print("No data")
     else:
-        print("Error, unable to connect to the API")
+        print(f"Current weather for {result[1]} is {result[2]} degrees Celcius with {result[3]} sky")
+        print(
+            f"Feels like temperature is {result[4]} degrees Celcius, the pressure is {result[5]} hPa and humidity is {result[6]}%")
 
 
 def get_weather_forecast() -> tuple[[list], [list]]:
