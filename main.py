@@ -1,6 +1,12 @@
+import sys
 import requests
 from settings import LIVE_URL, WEATHER_URL
 import matplotlib.pyplot as plt
+from db import connect_to_db
+
+con, cur = connect_to_db()
+
+
 
 
 def show_current_weather() -> None:
@@ -44,21 +50,26 @@ def draw_weather_forecast(temp: list, date: list):
 
 def select_mode() -> None:
     while True:
-        try:
-            user_choice = int(
-                input("For accurate weather data, select 1, if you want a 5-day weather forecast, select 2: "))
-            if user_choice not in (1, 2):
-                raise ValueError
-            break
-        except ValueError:
-            print("Please input only 1 or 2")
+        while True:
+            try:
+                user_choice = int(
+                    input("For accurate weather data, select 1, if you want a 5-day weather forecast, select 2, if you want to leave select 0: "))
+                if user_choice == 0:
+                    sys.exit()
+                if user_choice not in (1, 2):
+                    raise ValueError
 
-    if user_choice == 1:
-        show_current_weather()
 
-    elif user_choice == 2:
-        temp, date = get_weather_forecast()
-        draw_weather_forecast(temp, date)
+                break
+            except ValueError:
+                print("Please input only 1, 2 or 0")
+
+        if user_choice == 1:
+            show_current_weather()
+
+        elif user_choice == 2:
+            temp, date = get_weather_forecast()
+            draw_weather_forecast(temp, date)
 
 
 select_mode()
