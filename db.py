@@ -2,7 +2,7 @@ import sqlite3
 
 
 def connect_to_db():
-    con = sqlite3.connect("weather_db.db")
+    con = sqlite3.connect("weather_db.db", check_same_thread=False)
     cur = con.cursor()
     create_tables(con, cur)
     return con, cur

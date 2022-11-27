@@ -1,14 +1,21 @@
-import sys
+import os
+import signal
+import threading
 import requests
 from settings import LIVE_URL, WEATHER_URL
 import matplotlib.pyplot as plt
 from db import connect_to_db
 import datetime
-
+from typing import Tuple, List
 con, cur = connect_to_db()
 
 
 def insert_current_weather() -> None:
+    """
+    When starting the program and after every 11 minutes inserts the current weather information from the API into the database in the weather table.
+    :return: None
+    """
+    threading.Timer(660, insert_current_weather).start()
     request = requests.get(LIVE_URL)
     if request.status_code == 200:
         data = request.json()
@@ -25,6 +32,11 @@ def insert_current_weather() -> None:
 
 
 def insert_weather_forecast() -> None:
+    """
+    When starting the program and after every 30 minutes inserts forecast information from the API into the database in the forecast table.
+    :return: None
+    """
+    threading.Timer(1800, insert_weather_forecast).start()
     request = requests.get(WEATHER_URL)
     if request.status_code == 200:
         data = request.json()
@@ -43,17 +55,25 @@ def insert_weather_forecast() -> None:
 
 
 def show_current_weather() -> None:
+    """
+    Displays information about the current weather from the database.
+    :return: None
+    """
     cur.execute('SELECT * FROM weather')
     result = cur.fetchone()
     if not result:
         print('No data')
     else:
-        print(f'\nCurrent weather for {result[1]} is {result[2]} degrees Celcius with {result[3]} sky')
+        print(f'\nCurrent weather for {result[1]} is {result[2]} degrees Celsius with {result[3]} sky')
         print(
-            f'Feels like temperature is {result[4]} degrees Celcius, the pressure is {result[5]} hPa and humidity is {result[6]}%\n')
+            f'Feels like temperature is {result[4]} degrees Celsius, the pressure is {result[5]} hPa and humidity is {result[6]}%\n')
 
 
 def show_temperatures() -> None:
+    """
+    Displays information about the minimum, maximum and average temperature since the beginning of data storage from the database.
+    :return: None
+    """
     cur.execute('SELECT MIN(temperature), MAX(temperature), AVG(temperature) FROM forecast;')
     temperatures = cur.fetchone()
     cur.execute('SELECT date FROM forecast LIMIT 1;')
@@ -64,12 +84,17 @@ def show_temperatures() -> None:
         print('No data')
     else:
         print(f'\nData are from {date_start[0]} to {date_end[0]}')
-        print(f'Min temperature on K2 is {temperatures[0]} degree Celcius')
-        print(f'Max temperature on K2 is {temperatures[1]} degree Celcius')
-        print(f'Average temperature on K2 is {round(temperatures[2], 2)} degree Celcius\n')
+        print(f'Min temperature on K2 is {temperatures[0]} degree Celsius')
+        print(f'Max temperature on K2 is {temperatures[1]} degree Celsius')
+        print(f'Average temperature on K2 is {round(temperatures[2], 2)} degree Celsius\n')
 
 
-def get_weather_forecast() -> tuple[[list], [list]]:
+def get_weather_forecast() -> Tuple[List, List]:
+    """
+    Retrieves dates and temperatures from the databases from the forecast table.
+    :return: `Tuple`[`List`, `List`]
+    Tuple contains list of dates and list of temperatures
+    """
     temp = []
     date = []
     cur.execute('SELECT rowid, date, temperature FROM forecast ORDER BY rowid DESC LIMIT 39;')
@@ -83,7 +108,13 @@ def get_weather_forecast() -> tuple[[list], [list]]:
         return temp[::-1], date[::-1]
 
 
-def draw_weather_forecast(temp: list, date: list) -> None:
+def draw_weather_forecast(temp: List, date: List) -> None:
+    """
+    Draws a graph of the weather forecast for 5 days.
+    :param temp: temperature list
+    :param date: date list
+    :return: None
+    """
     if temp and date:
         plt.plot(date, temp, marker='o', markerfacecolor='blue', markersize=4)
         plt.xlabel('Date')
@@ -95,6 +126,10 @@ def draw_weather_forecast(temp: list, date: list) -> None:
 
 
 def select_mode() -> None:
+    """
+    Allows to choose between showing the current temperature, a graph of temperatures and minimum, maximum and average temperatures
+    :return: None
+    """
     while True:
         while True:
             try:
@@ -103,7 +138,7 @@ def select_mode() -> None:
                         'For accurate weather data, select 1, if you want a 5-day weather forecast, select 2,'
                         ' if you want min, max and avg temperature select 3 if you want to leave select 0: '))
                 if user_choice == 0:
-                    sys.exit()
+                    os.kill(os.getpid(), signal.SIGTERM)
                 if user_choice not in (1, 2, 3):
                     raise ValueError
                 break
